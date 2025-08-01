@@ -71,9 +71,11 @@
                                        title="Generar cita académica">
                                         📚 Citar
                                     </a>
-                                    <button onclick="copiarRapido({{ costumbre.id }}, 'apa')" 
+                                    <button data-costumbre-id="{{ costumbre.id }}" 
+                                            data-formato="apa"
                                             class="quick-copy-button" 
-                                            title="Copia rápida en formato APA">
+                                            title="Copia rápida en formato APA"
+                                            onclick="copiarRapido(this)">
                                         📋 APA
                                     </button>
                                 </div>
@@ -106,8 +108,9 @@
 
 <script>
 // Sistema de copia rápida
-async function copiarRapido(costumbreId, formato) {
-    const button = event.target;
+async function copiarRapido(button) {
+    const costumbreId = button.dataset.costumbreId;
+    const formato = button.dataset.formato;
     const originalText = button.innerHTML;
     
     try {

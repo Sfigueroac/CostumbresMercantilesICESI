@@ -210,7 +210,7 @@
         </div>
 
         <!-- Formato APA -->
-        <div class="citation-format">
+        <div class="citation-format" data-formato="apa">
             <h3>📖 Formato APA (7ª edición)</h3>
             <div class="citation-text">{{ citas.apa }}</div>
             <button class="copy-button" onclick="copiarCita('apa')">
@@ -219,7 +219,7 @@
         </div>
 
         <!-- Formato Chicago -->
-        <div class="citation-format">
+        <div class="citation-format" data-formato="chicago">
             <h3>🏛️ Formato Chicago</h3>
             <div class="citation-text">{{ citas.chicago }}</div>
             <button class="copy-button" onclick="copiarCita('chicago')">
@@ -228,7 +228,7 @@
         </div>
 
         <!-- Formato MLA -->
-        <div class="citation-format">
+        <div class="citation-format" data-formato="mla">
             <h3>🎓 Formato MLA</h3>
             <div class="citation-text">{{ citas.mla }}</div>
             <button class="copy-button" onclick="copiarCita('mla')">
@@ -237,7 +237,7 @@
         </div>
 
         <!-- Formato Vancouver -->
-        <div class="citation-format">
+        <div class="citation-format" data-formato="vancouver">
             <h3>🏥 Formato Vancouver</h3>
             <div class="citation-text">{{ citas.vancouver }}</div>
             <button class="copy-button" onclick="copiarCita('vancouver')">
@@ -246,7 +246,7 @@
         </div>
 
         <!-- Formato ISO 690 -->
-        <div class="citation-format">
+        <div class="citation-format" data-formato="iso690">
             <h3>🌐 Formato ISO 690</h3>
             <div class="citation-text">{{ citas.iso690 }}</div>
             <button class="copy-button" onclick="copiarCita('iso690')">
@@ -255,7 +255,7 @@
         </div>
 
         <!-- Formato Jurídico Colombiano -->
-        <div class="citation-format">
+        <div class="citation-format" data-formato="juridica_colombiana">
             <h3>⚖️ Formato Jurídico Colombiano</h3>
             <div class="citation-text">{{ citas.juridica_colombiana }}</div>
             <button class="copy-button" onclick="copiarCita('juridica_colombiana')">
@@ -278,18 +278,20 @@
 </div>
 
 <script>
-const citas = {
-    apa: {{ citas.apa|tojson }},
-    chicago: {{ citas.chicago|tojson }},
-    mla: {{ citas.mla|tojson }},
-    vancouver: {{ citas.vancouver|tojson }},
-    iso690: {{ citas.iso690|tojson }},
-    juridica_colombiana: {{ citas.juridica_colombiana|tojson }}
-};
+// Los datos de citas se obtienen desde los elementos del DOM
+function obtenerTextoCita(formato) {
+    const elemento = document.querySelector(`[data-formato="${formato}"] .citation-text`);
+    return elemento ? elemento.textContent.trim() : '';
+}
 
 function copiarCita(formato) {
-    const texto = citas[formato];
+    const texto = obtenerTextoCita(formato);
     const button = event.target;
+    
+    if (!texto) {
+        mostrarNotificacion('Error: No se pudo obtener el texto de la cita', 'error');
+        return;
+    }
     
     navigator.clipboard.writeText(texto).then(function() {
         // Cambiar apariencia del botón
