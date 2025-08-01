@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<h1>Página de Costumbres Mercantiles de Colombia</h1>
+
+<section>
+    <h2>Buscar Costumbres</h2>
+    <form method="GET" action="/">
+        <input type="text" name="search_ciudad" placeholder="🏙️ Buscar por ciudad (ej: Bogotá, Medellín)">
+        <input type="text" name="search_tipo" placeholder="📋 Buscar por tipo (ej: Comercial, Bancario)">
+        <input type="text" name="search_contenido" placeholder="🔍 Buscar por contenido o palabras clave">
+        <button type="submit">
+            <span class="sr-only">Realizar búsqueda</span>
+            Buscar
+        </button>
+    </form>
+</section>
+
+<section>
+    <h2>Resultados de la Búsqueda</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ciudad</th>
+                    <th>Tipo de Costumbre</th>
+                    <th>Contenido</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if lascostumbres %}
+                    {% for costumbre in lascostumbres %}
+                        <tr>
+                            <td>{{ costumbre.ciudad }}</td>
+                            <td>{{ costumbre.tipo }}</td>
+                            <td>{{ costumbre.contenido }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3" class="empty-state">
+                            No se encontraron costumbres mercantiles que coincidan con los criterios de búsqueda.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{% endblock %}
