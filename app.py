@@ -53,6 +53,11 @@ def index():
 
     return render_template('index.html', lascostumbres=resultados)
 
+@app.route('/acerca-de')
+def acerca_de():
+    """Página informativa sobre las costumbres mercantiles"""
+    return render_template('acerca_de.html')
+
 @app.route('/debug')
 def debug_info():
     """Página de debug para verificar el estado de la base de datos"""
