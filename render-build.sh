@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -o errexit  # Exit on error
 
 echo "🚀 Starting build process..."
@@ -10,15 +11,9 @@ python -m pip install --upgrade pip
 echo "📚 Installing dependencies..."
 pip install -r requirements.txt
 
-# Create database tables
-echo "🗄️ Creating database tables..."
-python -c "
-import os
-print(f'🌍 Environment: {os.environ.get(\"RENDER\", \"local\")}')
-from app import app, db
-with app.app_context():
-    db.create_all()
-    print('✅ Database tables created successfully!')
-"
+echo "✅ Dependencies installed successfully!"
+
+# Note: Database tables will be created automatically when the app starts
+echo "🗄️ Database will be initialized on first app start..."
 
 echo "✨ Build completed successfully!"
