@@ -2,6 +2,12 @@ services:
   - type: web
     name: costumbres-mercantiles
     env: python
-    buildCommand: ""
-    startCommand: gunicorn app:app
+    runtime: python-3.12.3
+    buildCommand: "./render-build.sh"
+    startCommand: "gunicorn --bind 0.0.0.0:$PORT app:app"
     plan: free
+    envVars:
+      - key: RENDER
+        value: "true"
+      - key: PYTHON_VERSION
+        value: "3.12.3"
