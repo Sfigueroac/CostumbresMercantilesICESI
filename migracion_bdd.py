@@ -1,19 +1,20 @@
 import sqlite3
-from app import app, db, Costumbres  # Asegúrate de que tu clase modelo se llama Costumbres
+from app import app, db, Costumbre  # Asegúrate que la clase se llama 'Costumbre'
 
-# Conectar a la base antigua (con datos)
+# Conectar a la base antigua con datos
 conexion_antigua = sqlite3.connect('costumbre.db')
 cursor = conexion_antigua.cursor()
 
-# Leer los datos existentes
 cursor.execute("SELECT ciudad, tipo, contenido FROM costumbres")
 datos = cursor.fetchall()
 
-# Insertar en la nueva base de datos con SQLAlchemy
 with app.app_context():
+    db.create_all()  # ✅ Asegura que la tabla exista antes de insertar
+
     for ciudad, tipo, contenido in datos:
-        nueva_costumbre = Costumbres(ciudad=ciudad, tipo=tipo, contenido=contenido)
-        db.session.add(nueva_costumbre)
+        nueva = Costumbre(ciudad=ciudad, tipo=tipo, contenido=contenido)
+        db.session.add(nueva)
+
     db.session.commit()
 
 print(f"{len(datos)} costumbres migradas exitosamente.")
