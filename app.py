@@ -87,13 +87,18 @@ def debug_info():
 with app.app_context():
     db.create_all()
     
-    # Cargar datos de muestra solo en Render (producción) o si la base está vacía
+    # Cargar datos reales solo en Render (producción) o si la base está vacía
     if os.environ.get('RENDER') or Costumbre.query.count() == 0:
         try:
-            from sample_data import create_sample_data
-            create_sample_data(app, db, Costumbre)
+            from real_data import create_real_data
+            create_real_data(app, db, Costumbre)
         except ImportError:
-            print("⚠️ No se pudo importar sample_data.py")
+            print("⚠️ No se pudo importar real_data.py, intentando con datos de muestra...")
+            try:
+                from sample_data import create_sample_data
+                create_sample_data(app, db, Costumbre)
+            except ImportError:
+                print("⚠️ No se pudieron cargar datos de respaldo")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5002))
