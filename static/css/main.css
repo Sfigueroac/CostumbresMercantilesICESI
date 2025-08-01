@@ -871,3 +871,131 @@ section {
         line-height: 1.4;
     }
 }
+
+/* ========================================
+   Estilos para el sistema de citas
+   ======================================== */
+.actions-cell {
+    min-width: 140px;
+    text-align: center;
+    padding: var(--spacing-sm) !important;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+
+.cite-button {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    text-decoration: none;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    transition: var(--transition-normal);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    white-space: nowrap;
+    min-width: 70px;
+    justify-content: center;
+}
+
+.cite-button:hover {
+    background: linear-gradient(135deg, var(--primary-light), var(--secondary-color));
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.quick-copy-button {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    white-space: nowrap;
+    min-width: 70px;
+    justify-content: center;
+}
+
+.quick-copy-button:hover {
+    background: var(--secondary-color);
+    transform: translateY(-1px);
+}
+
+.quick-copy-button:active {
+    transform: translateY(0);
+}
+
+.quick-copy-button.copied {
+    background: var(--success-color);
+    animation: pulse 0.3s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive para tabla con acciones */
+@media (max-width: 768px) {
+    .actions-cell {
+        min-width: 120px;
+    }
+    
+    .action-buttons {
+        flex-direction: row;
+        gap: var(--spacing-xs);
+    }
+    
+    .cite-button,
+    .quick-copy-button {
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-xs);
+        min-width: 50px;
+    }
+    
+    /* Hacer scroll horizontal más visible */
+    table {
+        min-width: 800px;
+    }
+}
+
+@media (max-width: 480px) {
+    .actions-cell {
+        min-width: 100px;
+    }
+    
+    .cite-button,
+    .quick-copy-button {
+        font-size: 10px;
+        padding: 4px 6px;
+        min-width: 40px;
+    }
+    
+    .cite-button span,
+    .quick-copy-button span {
+        display: none;
+    }
+    
+    /* Solo mostrar iconos en móviles muy pequeños */
+    .cite-button::before {
+        content: '📚';
+    }
+    
+    .quick-copy-button::before {
+        content: '📋';
+    }
+}

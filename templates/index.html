@@ -54,6 +54,7 @@
                     <th>Ciudad</th>
                     <th>Tipo de Costumbre</th>
                     <th>Contenido</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -63,6 +64,20 @@
                             <td class="city-cell">{{ costumbre.ciudad }}</td>
                             <td class="type-cell">{{ costumbre.tipo }}</td>
                             <td class="content-cell">{{ costumbre.contenido }}</td>
+                            <td class="actions-cell">
+                                <div class="action-buttons">
+                                    <a href="{{ url_for('generar_cita', costumbre_id=costumbre.id) }}" 
+                                       class="cite-button" 
+                                       title="Generar cita académica">
+                                        📚 Citar
+                                    </a>
+                                    <button onclick="copiarRapido({{ costumbre.id }}, 'apa')" 
+                                            class="quick-copy-button" 
+                                            title="Copia rápida en formato APA">
+                                        📋 APA
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                     {% endfor %}
                 {% else %}
@@ -88,5 +103,146 @@
     </div>
     {% endif %}
 </section>
+
+<script>
+// Sistema de copia rápida
+async function copiarRapido(costumbreId, formato) {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    try {
+        // Mostrar estado de carga
+        button.innerHTML = '⏳';
+        button.disabled = true;
+        
+        // Hacer petición a la API
+        const response = await fetch(`/api/cita/${costumbreId}?formato=${formato}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Copiar al portapapeles
+            await navigator.clipboard.writeText(data.cita);
+            
+            // Mostrar éxito
+            button.innerHTML = '✅';
+            button.classList.add('copied');
+            
+            // Mostrar notificación
+            mostrarNotificacion(`Cita en formato ${formato.toUpperCase()} copiada al portapapeles`);
+        } else {
+            throw new Error('Error al generar la cita');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        button.innerHTML = '❌';
+        mostrarNotificacion('Error al copiar la cita', 'error');
+    }
+    
+    // Restaurar botón después de 2 segundos
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.classList.remove('copied');
+        button.disabled = false;
+    }, 2000);
+}
+
+// Sistema de notificaciones
+function mostrarNotificacion(mensaje, tipo = 'success') {
+    // Crear elemento de notificación
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${tipo === 'success' ? 'var(--success-color)' : 'var(--error-color)'};
+        color: white;
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-radius: var(--border-radius-md);
+        box-shadow: var(--shadow-lg);
+        z-index: 1000;
+        font-weight: 600;
+        font-size: var(--font-size-sm);
+        animation: slideInRight 0.3s ease-out;
+        max-width: 300px;
+    `;
+    notif.textContent = mensaje;
+    
+    // Agregar animación CSS si no existe
+    if (!document.getElementById('notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notif);
+    
+    // Remover después de 3 segundos con animación
+    setTimeout(() => {
+        notif.style.animation = 'slideOutRight 0.3s ease-in';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+    
+    // Permitir cerrar con clic
+    notif.addEventListener('click', () => {
+        notif.style.animation = 'slideOutRight 0.3s ease-in';
+        setTimeout(() => notif.remove(), 300);
+    });
+}
+
+// Mejorar accesibilidad con teclado
+document.addEventListener('keydown', function(e) {
+    // Ctrl+C o Cmd+C para copiar cita rápida de la primera fila visible
+    if ((e.ctrlKey || e.metaKey) && e.key === 'c' && e.shiftKey) {
+        e.preventDefault();
+        const primeraFila = document.querySelector('tbody tr');
+        if (primeraFila) {
+            const botonCopia = primeraFila.querySelector('.quick-copy-button');
+            if (botonCopia) {
+                botonCopia.click();
+            }
+        }
+    }
+});
+
+// Agregar tooltips informativos
+document.addEventListener('DOMContentLoaded', function() {
+    // Tooltip para explicar los atajos de teclado
+    const tooltip = document.createElement('div');
+    tooltip.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background: var(--text-secondary);
+        color: white;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--border-radius-sm);
+        font-size: var(--font-size-xs);
+        z-index: 999;
+        opacity: 0.8;
+        max-width: 250px;
+        display: none;
+    `;
+    tooltip.innerHTML = '💡 <strong>Tip:</strong> Usa Ctrl+Shift+C para copia rápida de la primera costumbre';
+    document.body.appendChild(tooltip);
+    
+    // Mostrar tooltip brevemente al cargar
+    setTimeout(() => {
+        tooltip.style.display = 'block';
+        setTimeout(() => {
+            tooltip.style.display = 'none';
+        }, 5000);
+    }, 2000);
+});
+</script>
 
 {% endblock %}

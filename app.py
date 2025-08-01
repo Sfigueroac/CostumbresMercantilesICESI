@@ -1,6 +1,8 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, jsonify, url_for
 from flask_sqlalchemy import SQLAlchemy
 import os
+from datetime import datetime
+from urllib.parse import quote
 
 app = Flask(__name__)
 
@@ -80,8 +82,72 @@ def debug_info():
             </ul>
             <a href="/">← Volver al inicio</a>
             """
-    else:
-        return "Debug no disponible en producción", 404
+@app.route('/cita/<int:costumbre_id>')
+def generar_cita(costumbre_id):
+    """Página para generar citas en diferentes formatos"""
+    costumbre = Costumbre.query.get_or_404(costumbre_id)
+    
+    # URL actual para la cita
+    url_actual = request.url_root.rstrip('/') + url_for('generar_cita', costumbre_id=costumbre_id)
+    
+    # Fecha actual para la cita
+    fecha_consulta = datetime.now()
+    
+    # Generar diferentes formatos de cita
+    citas = generar_formatos_cita(costumbre, fecha_consulta, url_actual)
+    
+    return render_template('cita_legal.html', 
+                         costumbre=costumbre, 
+                         citas=citas,
+                         fecha_consulta=fecha_consulta)
+
+@app.route('/api/cita/<int:costumbre_id>')
+def api_generar_cita(costumbre_id):
+    """API para generar citas en formato JSON"""
+    formato = request.args.get('formato', 'apa')
+    costumbre = Costumbre.query.get_or_404(costumbre_id)
+    
+    url_actual = request.url_root.rstrip('/') + url_for('generar_cita', costumbre_id=costumbre_id)
+    fecha_consulta = datetime.now()
+    
+    citas = generar_formatos_cita(costumbre, fecha_consulta, url_actual)
+    
+    return jsonify({
+        'costumbre_id': costumbre_id,
+        'formato_solicitado': formato,
+        'cita': citas.get(formato, citas['apa']),
+        'todos_los_formatos': citas,
+        'fecha_generacion': fecha_consulta.isoformat()
+    })
+
+def generar_formatos_cita(costumbre, fecha_consulta, url):
+    """Genera citas en diferentes formatos académicos"""
+    
+    # Mes en español
+    meses = {
+        1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril',
+        5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto',
+        9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'
+    }
+    
+    dia = fecha_consulta.day
+    mes = meses[fecha_consulta.month]
+    año = fecha_consulta.year
+    fecha_es = f"{dia} de {mes} de {año}"
+    
+    return {
+        'apa': f"Costumbres Mercantiles de Colombia. ({año}). Costumbre mercantil de {costumbre.ciudad} - {costumbre.tipo}. Base de Datos de Costumbres Mercantiles de Colombia. Recuperado el {fecha_es}, de {url}",
+        
+        'chicago': f"\"Costumbre Mercantil de {costumbre.ciudad} - {costumbre.tipo}\". Base de Datos de Costumbres Mercantiles de Colombia. Consultado el {fecha_es}. {url}.",
+        
+        'mla': f"\"Costumbre Mercantil de {costumbre.ciudad} - {costumbre.tipo}\". Base de Datos de Costumbres Mercantiles de Colombia, {año}, {url}. Consultado el {fecha_es}.",
+        
+        'vancouver': f"Costumbres Mercantiles de Colombia. Costumbre mercantil de {costumbre.ciudad} - {costumbre.tipo} [Internet]. Colombia: Base de Datos de Costumbres Mercantiles; {año} [citado {fecha_es}]. Disponible en: {url}",
+        
+        'iso690': f"Costumbres Mercantiles de Colombia. Costumbre mercantil de {costumbre.ciudad} - {costumbre.tipo}. Base de Datos de Costumbres Mercantiles de Colombia [en línea]. {año} [consulta: {fecha_consulta.strftime('%Y-%m-%d')}]. Disponible en: {url}",
+        
+        'juridica_colombiana': f"COLOMBIA. Costumbre Mercantil de {costumbre.ciudad}. {costumbre.tipo}. En: Base de Datos de Costumbres Mercantiles de Colombia [en línea]. Bogotá: {año} [consultado el {fecha_es}]. Disponible en Internet: {url}"
+    }
 
 # Crear tablas al iniciar la aplicación
 with app.app_context():
