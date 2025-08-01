@@ -3,21 +3,50 @@
 {% block body %}
 <h1>Página de Costumbres Mercantiles de Colombia</h1>
 
-<section>
+<section class="search-section">
     <h2>Buscar Costumbres</h2>
-    <form method="GET" action="/">
-        <input type="text" name="search_ciudad" placeholder="🏙️ Buscar por ciudad (ej: Bogotá, Medellín)">
-        <input type="text" name="search_tipo" placeholder="📋 Buscar por tipo (ej: Comercial, Bancario)">
-        <input type="text" name="search_contenido" placeholder="🔍 Buscar por contenido o palabras clave">
-        <button type="submit">
-            <span class="sr-only">Realizar búsqueda</span>
-            Buscar
-        </button>
+    <form method="GET" action="/" class="search-form">
+        <div class="input-group">
+            <input type="text" name="search_ciudad" placeholder="🏙️ Buscar por ciudad (ej: Bogotá, Medellín)" 
+                   value="{{ request.args.get('search_ciudad', '') }}" autocomplete="off">
+        </div>
+        <div class="input-group">
+            <input type="text" name="search_tipo" placeholder="📋 Buscar por tipo (ej: Comercial, Bancario)" 
+                   value="{{ request.args.get('search_tipo', '') }}" autocomplete="off">
+        </div>
+        <div class="input-group">
+            <input type="text" name="search_contenido" placeholder="🔍 Buscar por contenido o palabras clave" 
+                   value="{{ request.args.get('search_contenido', '') }}" autocomplete="off">
+        </div>
+        <div class="button-group">
+            <button type="submit" class="search-button">
+                <span class="sr-only">Realizar búsqueda</span>
+                🔍 Buscar
+            </button>
+            {% if request.args.get('search_ciudad') or request.args.get('search_tipo') or request.args.get('search_contenido') %}
+            <a href="/" class="clear-button">
+                🗑️ Limpiar
+            </a>
+            {% endif %}
+        </div>
     </form>
 </section>
 
-<section>
-    <h2>Resultados de la Búsqueda</h2>
+<section class="results-section">
+    <h2>
+        {% if request.args.get('search_ciudad') or request.args.get('search_tipo') or request.args.get('search_contenido') %}
+            Resultados de la Búsqueda
+            {% if lascostumbres %}
+                <small>({{ lascostumbres|length }} encontradas)</small>
+            {% endif %}
+        {% else %}
+            Todas las Costumbres Mercantiles
+            {% if lascostumbres %}
+                <small>({{ lascostumbres|length }} registros)</small>
+            {% endif %}
+        {% endif %}
+    </h2>
+    
     <div class="table-container">
         <table>
             <thead>
@@ -31,22 +60,33 @@
                 {% if lascostumbres %}
                     {% for costumbre in lascostumbres %}
                         <tr>
-                            <td>{{ costumbre.ciudad }}</td>
-                            <td>{{ costumbre.tipo }}</td>
-                            <td>{{ costumbre.contenido }}</td>
+                            <td class="city-cell">{{ costumbre.ciudad }}</td>
+                            <td class="type-cell">{{ costumbre.tipo }}</td>
+                            <td class="content-cell">{{ costumbre.contenido }}</td>
                         </tr>
                     {% endfor %}
                 {% else %}
                     <tr>
                         <td colspan="3" class="empty-state">
-                            No se encontraron costumbres mercantiles que coincidan con los criterios de búsqueda.
-                            <br><small>Base de datos con 176 costumbres mercantiles reales de Colombia.</small>
+                            {% if request.args.get('search_ciudad') or request.args.get('search_tipo') or request.args.get('search_contenido') %}
+                                No se encontraron costumbres mercantiles que coincidan con los criterios de búsqueda.
+                                <br><small>Intenta con términos más generales o <a href="/">ver todas las costumbres</a>.</small>
+                            {% else %}
+                                No hay costumbres mercantiles disponibles en este momento.
+                                <br><small>Base de datos con 176 costumbres mercantiles reales de Colombia.</small>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endif %}
             </tbody>
         </table>
     </div>
+    
+    {% if lascostumbres and lascostumbres|length > 20 %}
+    <div class="scroll-hint">
+        💡 <small>Desliza horizontalmente para ver todo el contenido en dispositivos móviles</small>
+    </div>
+    {% endif %}
 </section>
 
 {% endblock %}
