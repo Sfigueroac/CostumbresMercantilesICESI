@@ -51,9 +51,49 @@ def index():
 
     return render_template('index.html', lascostumbres=resultados)
 
+@app.route('/debug')
+def debug_info():
+    """Página de debug para verificar el estado de la base de datos"""
+    if not os.environ.get('RENDER'):  # Solo en desarrollo
+        with app.app_context():
+            total_records = Costumbre.query.count()
+            all_records = Costumbre.query.limit(5).all()
+            
+            debug_data = {
+                'total_records': total_records,
+                'database_uri': app.config['SQLALCHEMY_DATABASE_URI'],
+                'sample_records': [
+                    {'ciudad': c.ciudad, 'tipo': c.tipo, 'contenido': c.contenido[:50] + '...'}
+                    for c in all_records
+                ],
+                'environment': 'Local Development'
+            }
+            
+            return f"""
+            <h1>Debug Info</h1>
+            <p><strong>Total records:</strong> {debug_data['total_records']}</p>
+            <p><strong>Database URI:</strong> {debug_data['database_uri']}</p>
+            <p><strong>Environment:</strong> {debug_data['environment']}</p>
+            <h2>Sample Records:</h2>
+            <ul>
+            {''.join([f'<li><strong>{r["ciudad"]}</strong> - {r["tipo"]}: {r["contenido"]}</li>' for r in debug_data['sample_records']])}
+            </ul>
+            <a href="/">← Volver al inicio</a>
+            """
+    else:
+        return "Debug no disponible en producción", 404
+
 # Crear tablas al iniciar la aplicación
 with app.app_context():
     db.create_all()
+    
+    # Cargar datos de muestra solo en Render (producción) o si la base está vacía
+    if os.environ.get('RENDER') or Costumbre.query.count() == 0:
+        try:
+            from sample_data import create_sample_data
+            create_sample_data(app, db, Costumbre)
+        except ImportError:
+            print("⚠️ No se pudo importar sample_data.py")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5002))
