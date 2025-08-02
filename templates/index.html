@@ -30,11 +30,42 @@
             {% endif %}
         </div>
     </form>
+    
+    {% if busqueda_semantica_habilitada %}
+    <!-- Búsqueda Semántica con IA -->
+    <div class="ai-search-section">
+        <h3>🤖 Búsqueda Inteligente con IA</h3>
+        <p class="ai-description">Busca usando lenguaje natural. Ejemplo: "contratos de café en el Huila" o "pagos en sector agrícola"</p>
+        <form method="GET" action="/" class="ai-search-form">
+            <div class="ai-input-group">
+                <input type="text" 
+                       name="search_semantica" 
+                       placeholder="💡 Describe lo que buscas en lenguaje natural..." 
+                       value="{{ request.args.get('search_semantica', '') }}" 
+                       class="ai-search-input"
+                       autocomplete="off">
+                <button type="submit" class="ai-search-button">
+                    ✨ Buscar con IA
+                </button>
+            </div>
+            {% if request.args.get('search_semantica') %}
+            <a href="/" class="clear-button">
+                🗑️ Limpiar búsqueda IA
+            </a>
+            {% endif %}
+        </form>
+    </div>
+    {% endif %}
 </section>
 
 <section class="results-section">
     <h2>
-        {% if request.args.get('search_ciudad') or request.args.get('search_tipo') or request.args.get('search_contenido') %}
+        {% if es_busqueda_semantica %}
+            🤖 Resultados de Búsqueda Inteligente
+            {% if lascostumbres %}
+                <small>({{ lascostumbres|length }} encontradas con IA)</small>
+            {% endif %}
+        {% elif request.args.get('search_ciudad') or request.args.get('search_tipo') or request.args.get('search_contenido') %}
             Resultados de la Búsqueda
             {% if lascostumbres %}
                 <small>({{ lascostumbres|length }} encontradas)</small>
@@ -46,6 +77,12 @@
             {% endif %}
         {% endif %}
     </h2>
+    
+    {% if es_busqueda_semantica %}
+    <div class="ai-results-info">
+        <p>🧠 <strong>Búsqueda potenciada por IA:</strong> Los resultados están ordenados por relevancia semántica a tu consulta: "{{ request.args.get('search_semantica', '') }}"</p>
+    </div>
+    {% endif %}
     
     <div class="table-container">
         <table>
@@ -60,8 +97,15 @@
             <tbody>
                 {% if lascostumbres %}
                     {% for costumbre in lascostumbres %}
-                        <tr>
-                            <td class="city-cell">{{ costumbre.ciudad }}</td>
+                        <tr {% if es_busqueda_semantica and similitudes.get(costumbre.id) %}class="resultado-semantico"{% endif %}>
+                            <td class="city-cell">
+                                {{ costumbre.ciudad }}
+                                {% if es_busqueda_semantica and similitudes.get(costumbre.id) %}
+                                    <div class="similitud-badge">
+                                        🎯 {{ "%.1f"|format(similitudes[costumbre.id] * 100) }}% similar
+                                    </div>
+                                {% endif %}
+                            </td>
                             <td class="type-cell">{{ costumbre.tipo }}</td>
                             <td class="content-cell">{{ costumbre.contenido }}</td>
                             <td class="actions-cell">

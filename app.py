@@ -3,6 +3,17 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 from datetime import datetime
 from urllib.parse import quote
+import json
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Configuración de OpenAI (solo si está disponible)
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    print("⚠️  OpenAI no disponible. Funcionalidades de IA deshabilitadas.")
 
 app = Flask(__name__)
 
@@ -28,6 +39,98 @@ class Costumbre(db.Model):
     ciudad = db.Column(db.String(50), nullable=False)
     tipo = db.Column(db.String(50), nullable=False)
     contenido = db.Column(db.String(255), nullable=False)
+    embedding = db.Column(db.Text)  # Almacenar embedding como JSON string
+    
+    def set_embedding(self, embedding_vector):
+        """Almacena el vector embedding como JSON string"""
+        if embedding_vector is not None:
+            self.embedding = json.dumps(embedding_vector)
+    
+    def get_embedding(self):
+        """Recupera el vector embedding desde JSON string"""
+        if self.embedding:
+            return np.array(json.loads(self.embedding))
+        return None
+    
+    def get_texto_completo(self):
+        """Genera el texto completo para embedding"""
+        return f"Ciudad: {self.ciudad}. Tipo: {self.tipo}. Contenido: {self.contenido}"
+
+# Clase para búsqueda semántica
+class BusquedaSemantica:
+    def __init__(self):
+        if OPENAI_AVAILABLE and os.getenv('OPENAI_API_KEY'):
+            self.client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+            self.habilitado = True
+        else:
+            self.habilitado = False
+            print("⚠️  Búsqueda semántica deshabilitada. Configure OPENAI_API_KEY para habilitarla.")
+    
+    def generar_embedding(self, texto):
+        """Genera embedding para un texto usando OpenAI"""
+        if not self.habilitado:
+            return None
+        
+        try:
+            response = self.client.embeddings.create(
+                model="text-embedding-3-small",
+                input=texto
+            )
+            return response.data[0].embedding
+        except Exception as e:
+            print(f"Error generando embedding: {e}")
+            return None
+    
+    def buscar_similar(self, query, top_k=10):
+        """Busca costumbres similares usando embeddings"""
+        if not self.habilitado:
+            return []
+        
+        query_embedding = self.generar_embedding(query)
+        if query_embedding is None:
+            return []
+        
+        resultados = []
+        costumbres_con_embedding = Costumbre.query.filter(Costumbre.embedding.isnot(None)).all()
+        
+        for costumbre in costumbres_con_embedding:
+            embedding_costumbre = costumbre.get_embedding()
+            if embedding_costumbre is not None:
+                # Calcular similitud coseno
+                similarity = cosine_similarity([query_embedding], [embedding_costumbre])[0][0]
+                resultados.append((costumbre, float(similarity)))
+        
+        # Ordenar por similitud descendente
+        resultados.sort(key=lambda x: x[1], reverse=True)
+        return resultados[:top_k]
+    
+    def generar_embeddings_faltantes(self):
+        """Genera embeddings para todas las costumbres que no los tienen"""
+        if not self.habilitado:
+            print("⚠️  No se pueden generar embeddings sin OpenAI API configurada")
+            return
+        
+        costumbres_sin_embedding = Costumbre.query.filter(
+            (Costumbre.embedding.is_(None)) | (Costumbre.embedding == '')
+        ).all()
+        
+        print(f"🔄 Generando embeddings para {len(costumbres_sin_embedding)} costumbres...")
+        
+        for i, costumbre in enumerate(costumbres_sin_embedding):
+            texto = costumbre.get_texto_completo()
+            embedding = self.generar_embedding(texto)
+            
+            if embedding:
+                costumbre.set_embedding(embedding)
+                print(f"✅ Embedding generado para costumbre {costumbre.id} ({i+1}/{len(costumbres_sin_embedding)})")
+            else:
+                print(f"❌ Error generando embedding para costumbre {costumbre.id}")
+        
+        db.session.commit()
+        print("🎉 Proceso completado!")
+
+# Instancia global de búsqueda semántica
+busqueda_semantica = BusquedaSemantica()
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -41,22 +144,112 @@ def index():
         db.session.commit()
         return redirect('/')
 
+    # Búsqueda tradicional
     ciudad_q = request.args.get('search_ciudad', '')
     tipo_q = request.args.get('search_tipo', '')
     contenido_q = request.args.get('search_contenido', '')
+    
+    # Búsqueda semántica
+    busqueda_semantica_q = request.args.get('search_semantica', '')
+    
+    resultados = []
+    es_busqueda_semantica = False
+    similitudes = {}
+    
+    if busqueda_semantica_q and busqueda_semantica.habilitado:
+        # Realizar búsqueda semántica
+        resultados_semanticos = busqueda_semantica.buscar_similar(busqueda_semantica_q, top_k=20)
+        resultados = [costumbre for costumbre, similitud in resultados_semanticos]
+        similitudes = {costumbre.id: similitud for costumbre, similitud in resultados_semanticos}
+        es_busqueda_semantica = True
+    else:
+        # Búsqueda tradicional
+        resultados = Costumbre.query.filter(
+            Costumbre.ciudad.ilike(f'%{ciudad_q}%'),
+            Costumbre.tipo.ilike(f'%{tipo_q}%'),
+            Costumbre.contenido.ilike(f'%{contenido_q}%')
+        ).all()
 
-    resultados = Costumbre.query.filter(
-        Costumbre.ciudad.ilike(f'%{ciudad_q}%'),
-        Costumbre.tipo.ilike(f'%{tipo_q}%'),
-        Costumbre.contenido.ilike(f'%{contenido_q}%')
-    ).all()
-
-    return render_template('index.html', lascostumbres=resultados)
+    return render_template('index.html', 
+                         lascostumbres=resultados,
+                         es_busqueda_semantica=es_busqueda_semantica,
+                         similitudes=similitudes,
+                         busqueda_semantica_habilitada=busqueda_semantica.habilitado)
 
 @app.route('/acerca-de')
 def acerca_de():
     """Página informativa sobre las costumbres mercantiles"""
     return render_template('acerca_de.html')
+
+@app.route('/api/busqueda-semantica')
+def api_busqueda_semantica():
+    """API para búsqueda semántica AJAX"""
+    query = request.args.get('q', '')
+    
+    if not query or not busqueda_semantica.habilitado:
+        return jsonify({'error': 'Consulta vacía o búsqueda semántica no disponible'}), 400
+    
+    try:
+        resultados = busqueda_semantica.buscar_similar(query, top_k=10)
+        
+        response_data = []
+        for costumbre, similitud in resultados:
+            response_data.append({
+                'id': costumbre.id,
+                'ciudad': costumbre.ciudad,
+                'tipo': costumbre.tipo,
+                'contenido': costumbre.contenido,
+                'similitud': round(similitud * 100, 1)  # Convertir a porcentaje
+            })
+        
+        return jsonify({
+            'resultados': response_data,
+            'total': len(response_data),
+            'query': query
+        })
+    
+    except Exception as e:
+        return jsonify({'error': f'Error en búsqueda: {str(e)}'}), 500
+
+@app.route('/admin/generar-embeddings')
+def generar_embeddings():
+    """Endpoint para generar embeddings (solo desarrollo)"""
+    if os.environ.get('RENDER'):
+        return jsonify({'error': 'No disponible en producción'}), 403
+    
+    if not busqueda_semantica.habilitado:
+        return jsonify({'error': 'OpenAI API no configurada'}), 400
+    
+    try:
+        busqueda_semantica.generar_embeddings_faltantes()
+        
+        total_costumbres = Costumbre.query.count()
+        con_embeddings = Costumbre.query.filter(Costumbre.embedding.isnot(None)).count()
+        
+        return jsonify({
+            'success': True,
+            'mensaje': 'Embeddings generados exitosamente',
+            'total_costumbres': total_costumbres,
+            'con_embeddings': con_embeddings
+        })
+    
+    except Exception as e:
+        return jsonify({'error': f'Error generando embeddings: {str(e)}'}), 500
+
+@app.route('/admin/estado-embeddings')
+def estado_embeddings():
+    """Endpoint para verificar el estado de los embeddings"""
+    total_costumbres = Costumbre.query.count()
+    con_embeddings = Costumbre.query.filter(Costumbre.embedding.isnot(None)).count()
+    sin_embeddings = total_costumbres - con_embeddings
+    
+    return jsonify({
+        'total_costumbres': total_costumbres,
+        'con_embeddings': con_embeddings,
+        'sin_embeddings': sin_embeddings,
+        'porcentaje_completado': round((con_embeddings / total_costumbres) * 100, 1) if total_costumbres > 0 else 0,
+        'busqueda_semantica_habilitada': busqueda_semantica.habilitado
+    })
 
 @app.route('/debug')
 def debug_info():

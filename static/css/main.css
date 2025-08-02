@@ -1221,3 +1221,163 @@ section {
         margin-left: 0;
     }
 }
+
+/* ========================================
+   Búsqueda Semántica con IA - Estilos
+   ======================================== */
+.ai-search-section {
+    margin-top: var(--spacing-2xl);
+    padding: var(--spacing-xl);
+    background: linear-gradient(135deg, #667eea15, #764ba215);
+    border: 2px solid #667eea30;
+    border-radius: var(--border-radius-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-search-section::before {
+    content: '🤖';
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    font-size: var(--font-size-2xl);
+    opacity: 0.3;
+    z-index: 1;
+}
+
+.ai-search-section h3 {
+    color: #667eea;
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    position: relative;
+    z-index: 2;
+}
+
+.ai-description {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-lg);
+    font-style: italic;
+    position: relative;
+    z-index: 2;
+}
+
+.ai-search-form {
+    position: relative;
+    z-index: 2;
+}
+
+.ai-input-group {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.ai-search-input {
+    flex: 1;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 2px solid #667eea40;
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-base);
+    background: #ffffff;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+}
+
+.ai-search-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
+}
+
+.ai-search-input::placeholder {
+    color: #667eea80;
+    font-style: italic;
+}
+
+.ai-search-button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #ffffff;
+    border: none;
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--border-radius-md);
+    font-weight: 600;
+    font-size: var(--font-size-base);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    white-space: nowrap;
+}
+
+.ai-search-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #5a6fd8, #6a42a0);
+}
+
+.ai-search-button:active {
+    transform: translateY(0);
+}
+
+/* Resultados de búsqueda IA */
+.ai-results-info {
+    background: linear-gradient(135deg, #667eea10, #764ba210);
+    border-left: 4px solid #667eea;
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0;
+}
+
+.ai-results-info p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.resultado-semantico {
+    background: linear-gradient(135deg, #667eea08, #764ba208);
+    border-left: 3px solid #667eea50;
+}
+
+.similitud-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #ffffff;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    margin-top: var(--spacing-xs);
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+/* Responsive para búsqueda IA */
+@media (max-width: 768px) {
+    .ai-input-group {
+        flex-direction: column;
+    }
+    
+    .ai-search-button {
+        width: 100%;
+        justify-self: center;
+    }
+    
+    .ai-search-section {
+        padding: var(--spacing-lg);
+    }
+    
+    .ai-search-section::before {
+        font-size: var(--font-size-lg);
+        top: var(--spacing-sm);
+        right: var(--spacing-sm);
+    }
+    
+    .similitud-badge {
+        display: block;
+        text-align: center;
+        margin-top: var(--spacing-sm);
+    }
+}
