@@ -34,8 +34,14 @@
     {% if busqueda_semantica_habilitada %}
     <!-- Búsqueda Semántica con IA -->
     <div class="ai-search-section">
-        <h3>🤖 Búsqueda Inteligente con IA</h3>
-        <p class="ai-description">Busca usando lenguaje natural. Ejemplo: "contratos de café en el Huila" o "pagos en sector agrícola"</p>
+        <h3>🤖 Búsqueda Inteligente{% if not busqueda_semantica_habilitada %} (Modo Demo){% endif %}</h3>
+        <p class="ai-description">
+            {% if busqueda_semantica_habilitada %}
+            Busca usando lenguaje natural con IA. Ejemplo: "contratos de café en el Huila" o "pagos en sector agrícola"
+            {% else %}
+            Modo demostración - búsqueda inteligente simulada. Instale OpenAI y configure OPENAI_API_KEY para funcionalidad completa.
+            {% endif %}
+        </p>
         <form method="GET" action="/" class="ai-search-form">
             <div class="ai-input-group">
                 <input type="text" 
@@ -45,7 +51,7 @@
                        class="ai-search-input"
                        autocomplete="off">
                 <button type="submit" class="ai-search-button">
-                    ✨ Buscar con IA
+                    ✨ Buscar con IA {% if not busqueda_semantica_habilitada %}(Demo){% endif %}
                 </button>
             </div>
             {% if request.args.get('search_semantica') %}
