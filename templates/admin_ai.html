@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Administración IA - Costumbres Mercantiles{% endblock %}
+
+{% block head %}
+<style>
+.admin-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+}
+
+.admin-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.status-card {
+    background: linear-gradient(135deg, var(--primary-color)10, var(--accent-color)10);
+    border: 1px solid var(--primary-color)30;
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+}
+
+.status-number {
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
+}
+
+.status-label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+    margin: var(--spacing-lg) 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success-color), var(--accent-color));
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+}
+
+.action-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: var(--spacing-xl);
+}
+
+.admin-button {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: white;
+    border: none;
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--border-radius-md);
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    cursor: pointer;
+    transition: var(--transition-normal);
+    font-size: var(--font-size-base);
+}
+
+.admin-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.admin-button.secondary {
+    background: linear-gradient(135deg, var(--text-muted), var(--text-secondary));
+}
+
+.admin-button.danger {
+    background: linear-gradient(135deg, var(--error-color), #c53030);
+}
+
+.admin-button.success {
+    background: linear-gradient(135deg, var(--success-color), #2f855a);
+}
+
+.ai-status {
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.ai-status.enabled {
+    background: linear-gradient(135deg, #22c55e15, #16a34a15);
+    border: 1px solid #22c55e50;
+}
+
+.ai-status.disabled {
+    background: linear-gradient(135deg, #ef444415, #dc262615);
+    border: 1px solid #ef444450;
+}
+
+.ai-status-icon {
+    font-size: var(--font-size-2xl);
+}
+
+.demo-section {
+    background: linear-gradient(135deg, #f59e0b15, #f9731615);
+    border: 1px solid #f59e0b50;
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-top: var(--spacing-xl);
+}
+
+.demo-queries {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.demo-query {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    text-decoration: none;
+    color: var(--text-primary);
+}
+
+.demo-query:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--accent-color);
+}
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: var(--spacing-lg);
+    }
+    
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .demo-queries {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="admin-container">
+    <h1>🤖 Panel de Administración IA</h1>
+    <p>Gestión de búsqueda semántica y embeddings</p>
+
+    <div class="admin-card">
+        <h2>Estado del Sistema IA</h2>
+        
+        <div class="ai-status {{ 'enabled' if busqueda_semantica_habilitada else 'disabled' }}">
+            <div class="ai-status-icon">
+                {{ '🟢' if busqueda_semantica_habilitada else '🔴' }}
+            </div>
+            <div>
+                <strong>
+                    {{ 'Búsqueda Semántica HABILITADA' if busqueda_semantica_habilitada else 'Búsqueda Semántica DESHABILITADA' }}
+                </strong>
+                <br>
+                <small>
+                    {{ 'OpenAI API configurada correctamente' if busqueda_semantica_habilitada else 'Configure OPENAI_API_KEY para habilitar' }}
+                </small>
+            </div>
+        </div>
+
+        <div class="status-grid">
+            <div class="status-card">
+                <div class="status-number">{{ total_costumbres }}</div>
+                <div class="status-label">Total Costumbres</div>
+            </div>
+            <div class="status-card">
+                <div class="status-number">{{ con_embeddings }}</div>
+                <div class="status-label">Con Embeddings</div>
+            </div>
+            <div class="status-card">
+                <div class="status-number">{{ sin_embeddings }}</div>
+                <div class="status-label">Sin Embeddings</div>
+            </div>
+            <div class="status-card">
+                <div class="status-number">{{ porcentaje_completado }}%</div>
+                <div class="status-label">Completado</div>
+            </div>
+        </div>
+
+        <h3>Progreso de Embeddings</h3>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ porcentaje_completado }}%">
+                {{ porcentaje_completado }}% Completado
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            {% if not busqueda_semantica_habilitada %}
+            <div class="admin-button secondary">
+                🔧 Configurar OpenAI API
+            </div>
+            {% else %}
+                {% if sin_embeddings > 0 %}
+                <a href="/admin/generar-embeddings" class="admin-button">
+                    ⚡ Generar Embeddings Faltantes
+                </a>
+                {% endif %}
+            {% endif %}
+            
+            <a href="/admin/estado-embeddings" class="admin-button secondary">
+                📊 Ver Estado JSON
+            </a>
+            
+            <a href="/" class="admin-button secondary">
+                🏠 Volver al Inicio
+            </a>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🎯 Prueba la Búsqueda Semántica</h2>
+        <p>Haz clic en estas consultas de ejemplo para probar la búsqueda inteligente:</p>
+        
+        <div class="demo-queries">
+            <a href="/?search_semantica=contratos+de+café+en+el+huila" class="demo-query">
+                ☕ Contratos de café en el Huila
+            </a>
+            <a href="/?search_semantica=pagos+en+agricultura" class="demo-query">
+                🌾 Pagos en agricultura
+            </a>
+            <a href="/?search_semantica=costumbres+bancarias+en+medellín" class="demo-query">
+                🏦 Costumbres bancarias en Medellín
+            </a>
+            <a href="/?search_semantica=comercio+de+flores" class="demo-query">
+                🌸 Comercio de flores
+            </a>
+            <a href="/?search_semantica=contratos+inmobiliarios+bogotá" class="demo-query">
+                🏠 Contratos inmobiliarios Bogotá
+            </a>
+            <a href="/?search_semantica=retención+en+la+fuente" class="demo-query">
+                💰 Retención en la fuente
+            </a>
+        </div>
+    </div>
+
+    {% if not busqueda_semantica_habilitada %}
+    <div class="admin-card">
+        <h2>🔧 Configuración Requerida</h2>
+        <p>Para habilitar la búsqueda semántica con IA, necesitas:</p>
+        <ol>
+            <li>Obtener una API key de <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></li>
+            <li>Crear archivo <code>.env</code> con: <code>OPENAI_API_KEY=tu_api_key</code></li>
+            <li>Reiniciar la aplicación</li>
+            <li>Generar embeddings para todas las costumbres</li>
+        </ol>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Auto-refresh del estado cada 30 segundos
+setTimeout(() => {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}

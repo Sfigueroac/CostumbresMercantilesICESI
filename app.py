@@ -7,6 +7,10 @@ import json
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
+# Cargar variables de entorno desde .env
+from dotenv import load_dotenv
+load_dotenv()
+
 # Configuración de OpenAI (solo si está disponible)
 try:
     from openai import OpenAI
@@ -250,6 +254,21 @@ def estado_embeddings():
         'porcentaje_completado': round((con_embeddings / total_costumbres) * 100, 1) if total_costumbres > 0 else 0,
         'busqueda_semantica_habilitada': busqueda_semantica.habilitado
     })
+
+@app.route('/admin')
+def admin_panel():
+    """Panel de administración visual para IA"""
+    total_costumbres = Costumbre.query.count()
+    con_embeddings = Costumbre.query.filter(Costumbre.embedding.isnot(None)).count()
+    sin_embeddings = total_costumbres - con_embeddings
+    porcentaje_completado = round((con_embeddings / total_costumbres) * 100, 1) if total_costumbres > 0 else 0
+    
+    return render_template('admin_ai.html',
+                         total_costumbres=total_costumbres,
+                         con_embeddings=con_embeddings,
+                         sin_embeddings=sin_embeddings,
+                         porcentaje_completado=porcentaje_completado,
+                         busqueda_semantica_habilitada=busqueda_semantica.habilitado)
 
 @app.route('/debug')
 def debug_info():
